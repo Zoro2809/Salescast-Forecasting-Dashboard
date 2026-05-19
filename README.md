@@ -6,17 +6,6 @@ A full-stack machine learning sales forecasting dashboard built on the Microsoft
 
 SalesCast processes the UCI Online Retail Dataset (541,909 transactions) and provides real-time sales forecasts through an interactive web dashboard. Business analysts can search any product and instantly get a data-driven forecast — no coding required.
 
-## Team
-
-| Name | Roll Number |
-|---|---|
-| Divya Singh | 202301100045 |
-| Harsh Kumar | 202301100054 |
-| Aarya Malghe | 202301100061 |
-
-**Guide:** Dr. Kalyani Kadam  
-**Institute:** MIT Academy of Engineering, Alandi (D), Pune  
-**Program:** B.Tech Computer Engineering (Software Engineering) — Semester VI (2025–2026)
 
 ## Features
 
