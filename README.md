@@ -61,8 +61,6 @@ ImprovedSalesForecast/
 
 
 
-## How to Run
-
 ### Prerequisites
 - .NET 8 SDK
 - SQL Server or SQL Server LocalDB
@@ -70,10 +68,6 @@ ImprovedSalesForecast/
 
 The database seeds automatically on first run (~30–60 seconds).
 
-Retrain Models (optional — models already included)
-
-cd src/ModelTrainer
-dotnet run
 
 ML Models
 LightGBM
