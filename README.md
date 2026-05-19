@@ -68,17 +68,13 @@ ImprovedSalesForecast/
 - SQL Server or SQL Server LocalDB
 - UCI Online Retail CSV file placed in the data folder
 
-### Run the Dashboard
-
-
-
-
 The database seeds automatically on first run (~30–60 seconds).
 
 Retrain Models (optional — models already included)
 
 cd src/ModelTrainer
 dotnet run
+
 ML Models
 LightGBM
 13 input features: lag-1, lag-3, lag-12, rolling mean-3, rolling mean-6, units, avg/max/min daily units, sales days, unit price, year, month
@@ -104,3 +100,4 @@ Model Comparison	All 3 forecasts on one chart — default landing page
 LightGBM Regression	Single next-month prediction with history chart
 SSA Time Series	3-month forecast table with confidence intervals
 Ensemble Forecast	Weighted combination KPI cards + chart
+
