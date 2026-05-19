@@ -42,23 +42,26 @@ SalesCast processes the UCI Online Retail Dataset (541,909 transactions) and pro
 - **After Cleaning:** ~397,884 rows
 - **Searchable Products:** ~430 products (6+ months history)
 
-## Project Structure
-
 ImprovedSalesForecast/
+│
 ├── src/
-│   ├── Shared/                  # Shared data structures (SaleData, Predictions)
-│   ├── ModelTrainer/            # Console app — trains LightGBM + SSA models
-│   │   ├── DataProcessing/      # CSV loading, cleaning, monthly aggregation
-│   │   ├── RegressionTrainer/   # LightGBM training pipeline
-│   │   └── TimeSeriesTrainer/   # SSA per-product training
-│   └── SalesDashboard/          # ASP.NET Core 8 web application
-│       ├── Controllers/         # ForecastController, CatalogController
-│       ├── Pages/Reports/       # Razor Pages (Regression, TimeSeries, Ensemble, Comparison)
-│       ├── EntityModels/        # Product, MonthlySale EF Core entities
-│       ├── Queries/             # Dapper SQL queries
-│       ├── Infrastructure/      # DbContext, DatabaseSeeder
-│       └── wwwroot/             # CSS, JS (forecast.js, Plotly.js)
-
+│   │
+│   ├── Shared/                 # Shared data structures (SaleData, Predictions)
+│   │
+│   ├── ModelTrainer/           # Console app — trains LightGBM + SSA models
+│   │   │
+│   │   ├── DataProcessing/     # CSV loading, cleaning, monthly aggregation
+│   │   ├── RegressionTrainer/  # LightGBM training pipeline
+│   │   └── TimeSeriesTrainer/  # SSA per-product training
+│   │
+│   └── SalesDashboard/         # ASP.NET Core 8 web application
+│       │
+│       ├── Controllers/        # ForecastController, CatalogController
+│       ├── Pages/Reports/      # Razor Pages (Regression, TimeSeries, Ensemble, Comparison)
+│       ├── EntityModels/       # Product, MonthlySale EF Core entities
+│       ├── Queries/            # Dapper SQL queries
+│       ├── Infrastructure/     # DbContext, DatabaseSeeder
+│       └── wwwroot/            # CSS, JS (forecast.js, Plotly.js)
 
 
 ### Prerequisites
