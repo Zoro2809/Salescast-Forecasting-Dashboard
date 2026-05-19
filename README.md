@@ -42,6 +42,9 @@ SalesCast processes the UCI Online Retail Dataset (541,909 transactions) and pro
 - **After Cleaning:** ~397,884 rows
 - **Searchable Products:** ~430 products (6+ months history)
 
+## Project Structure
+
+```text
 ImprovedSalesForecast/
 │
 ├── src/
@@ -62,6 +65,7 @@ ImprovedSalesForecast/
 │       ├── Queries/            # Dapper SQL queries
 │       ├── Infrastructure/     # DbContext, DatabaseSeeder
 │       └── wwwroot/            # CSS, JS (forecast.js, Plotly.js)
+```
 
 
 ### Prerequisites
