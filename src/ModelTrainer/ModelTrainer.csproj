@@ -1,0 +1,24 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <RootNamespace>ImprovedSalesForecast.ModelTrainer</RootNamespace>
+    <AssemblyName>ImprovedSalesForecast.ModelTrainer</AssemblyName>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Shared\Shared.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.ML" Version="3.0.1" />
+    <PackageReference Include="Microsoft.ML.FastTree" Version="3.0.1" />
+    <PackageReference Include="Microsoft.ML.LightGbm" Version="3.0.1" />
+    <PackageReference Include="Microsoft.ML.TimeSeries" Version="3.0.1" />
+    <PackageReference Include="CsvHelper" Version="33.0.1" />
+  </ItemGroup>
+
+</Project>

@@ -1,0 +1,44 @@
+/* ── Supporting styles (core layout lives in _Layout.cshtml <style>) ── */
+
+.row.g-3 { margin-bottom: 0; }
+.htable.table > :not(caption) > * > * { background-color: transparent; border-bottom-color: rgba(0,0,0,0.03); color: inherit; }
+#historyChart, #comparisonChart { width: 100% !important; }
+
+/* Regression summary table */
+.table-sm tbody tr:last-child td { background: transparent !important; }
+.table-sm tbody tr:last-child { border-top: 1px solid rgba(0,0,0,0.05); }
+
+.row.g-3.mb-3 { margin-bottom: 2rem !important; }
+
+/* Forecast table in TimeSeries */
+#tsForecastBody td { vertical-align: middle; font-size: 15px; color: var(--text-900); font-weight: 600; }
+#tsForecastBody td:last-child { color: var(--text-500); font-size: 13px; font-weight: 500; }
+
+/* Icons */
+.hist-head::before {
+    content: '\f1da';
+    font-family: 'Font Awesome 6 Free';
+    font-weight: 900;
+    font-size: 14px;
+    opacity: 0.5;
+    margin-right: 10px;
+    color: var(--text-900);
+}
+
+.card-sm-head::before {
+    content: '\f080';
+    font-family: 'Font Awesome 6 Free';
+    font-weight: 900;
+    font-size: 14px;
+    margin-right: 10px;
+    color: var(--text-400);
+}
+
+.table > :not(caption) > * > * { background-color: transparent !important; }
+.card-box { overflow: visible; }
+#noSsaMsg { font-size: 14px; color: var(--text-500) !important; font-weight: 500; }
+
+@media (max-width: 576px) {
+    .prod-bar { flex-direction: column; align-items: flex-start; gap: 16px; padding: 20px; }
+    .kpi { padding: 24px 20px; }
+}

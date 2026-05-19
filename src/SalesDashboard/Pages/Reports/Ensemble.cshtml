@@ -1,0 +1,122 @@
+@page
+@model ImprovedSalesForecast.SalesDashboard.Pages.Reports.EnsembleModel
+@{
+    ViewData["Title"] = "Ensemble Forecast";
+    ViewData["Subtitle"] = "Combines LightGBM (60%) + SSA Time Series (40%) — consistently outperforms any single model.";
+    ViewData["ActivePage"] = "Ensemble";
+}
+
+<div class="search-wrap">
+    <span class="search-loup">&#x1F50D;</span>
+    <input id="searchInput" type="text" class="search-input"
+           placeholder="Type a product name (e.g. candle, mug, bag)..." autocomplete="off" />
+</div>
+
+<div id="forecastSection" style="display:none;">
+
+    <div class="prod-bar">
+        <div>
+            <div class="prod-name" id="productTitle"></div>
+            <div class="prod-meta" id="productMeta"></div>
+        </div>
+        <button class="btn btn-sm btn-outline-secondary" onclick="clearProduct()">&#x2715; New Search</button>
+    </div>
+
+    <div class="row g-3 mb-3">
+        <div class="col-md-4">
+            <div class="kpi blue">
+                <div class="kpi-label">LightGBM (60%)</div>
+                <div class="kpi-val" id="regressionVal">—</div>
+                <div class="kpi-sub">units</div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="kpi green">
+                <div class="kpi-label">SSA Time Series (40%)</div>
+                <div class="kpi-val" id="tsVal">—</div>
+                <div class="kpi-sub">units</div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="kpi amber">
+                <div class="kpi-label">Ensemble Result</div>
+                <div class="kpi-val" id="ensembleVal">—</div>
+                <div class="kpi-sub" id="ensembleMonth">units</div>
+                <div class="kpi-sub" id="confidenceRange"></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card-box card-pad mb-0">
+        <div id="historyChart" style="height:300px;"></div>
+    </div>
+
+    <div class="hist-wrap">
+        <div class="hist-head">Sales History</div>
+        <div class="table-responsive">
+            <table class="htable table">
+                <thead>
+                    <tr><th>Year</th><th>Month</th><th>Units</th><th>Avg/Day</th><th>Max/Day</th><th>Price</th></tr>
+                </thead>
+                <tbody id="historyBody"></tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+    initSearch('searchInput', function(p) {
+        loadForecast(p.id, p.description, p.unitPrice, p.monthCount);
+    });
+
+    function loadForecast(productId, description, price, months) {
+        document.getElementById('forecastSection').style.display = '';
+        document.getElementById('productTitle').textContent = description;
+        document.getElementById('productMeta').textContent =
+            '£' + (price != null ? price.toFixed(2) : '0.00') + ' per unit · ' + months + ' months of history';
+
+        fetch('/api/catalog/' + productId + '/history')
+            .then(function(r) {
+                if (!r.ok) throw new Error('History ' + r.status);
+                return r.json();
+            })
+            .then(function(history) {
+                populateHistoryTable(history);
+
+                fetch('/api/forecast/' + productId + '/ensemble')
+                    .then(function(r) { return r.ok ? r.json() : null; })
+                    .then(function(ensemble) {
+                        if (ensemble != null) {
+                            document.getElementById('regressionVal').textContent = Math.round(ensemble.regressionForecast).toLocaleString();
+                            document.getElementById('tsVal').textContent = Math.round(ensemble.timeSeriesForecast).toLocaleString();
+                            document.getElementById('ensembleVal').textContent = Math.round(ensemble.ensembleForecast).toLocaleString();
+                            // Compute forecast month label from history last month + 1 (matching chart rendering)
+                            var lastH = history[history.length - 1];
+                            var nextDate = new Date(lastH.year, lastH.month);
+                            document.getElementById('ensembleMonth').textContent =
+                                nextDate.toLocaleString('default', {month: 'short', year: 'numeric'});
+                            document.getElementById('confidenceRange').textContent =
+                                '95% CI: ' + Math.round(ensemble.confidenceLower) + '–' + Math.round(ensemble.confidenceUpper);
+                            renderHistoryChart(history, ensemble.ensembleForecast, 'Ensemble Forecast', '#f43f5e');
+                        } else {
+                            renderHistoryChart(history, null, '', '#f43f5e');
+                            document.getElementById('ensembleMonth').textContent = 'Insufficient data';
+                        }
+                    })
+                    .catch(function(err) {
+                        console.error('Ensemble error:', err);
+                        renderHistoryChart(history, null, '', '#f59e0b');
+                        document.getElementById('ensembleMonth').textContent = '—';
+                    });
+            })
+            .catch(function(err) { console.error('History error:', err); });
+    }
+
+    function clearProduct() {
+        document.getElementById('forecastSection').style.display = 'none';
+        document.getElementById('searchInput').value = '';
+        document.getElementById('searchInput').focus();
+    }
+</script>
+}

@@ -1,0 +1,128 @@
+@page
+@model ImprovedSalesForecast.SalesDashboard.Pages.Reports.RegressionModel
+@{
+    ViewData["Title"] = "LightGBM Regression Forecast";
+    ViewData["Subtitle"] = "Predicts next month's units using lag features (lag1, lag3, lag12, rolling averages) and gradient boosting.";
+    ViewData["ActivePage"] = "Regression";
+}
+
+<div class="search-wrap">
+    <span class="search-loup">&#x1F50D;</span>
+    <input id="searchInput" type="text" class="search-input"
+           placeholder="Type a product name (e.g. candle, mug, bag)..." autocomplete="off" />
+</div>
+
+<div id="forecastSection" style="display:none;">
+
+    <div class="prod-bar">
+        <div>
+            <div class="prod-name" id="productTitle"></div>
+            <div class="prod-meta" id="productMeta"></div>
+        </div>
+        <button class="btn btn-sm btn-outline-secondary" onclick="clearProduct()">&#x2715; New Search</button>
+    </div>
+
+    <div class="row g-3 mb-0">
+        <div class="col-lg-8">
+            <div class="card-box card-pad">
+                <div id="historyChart" style="height:300px;"></div>
+            </div>
+        </div>
+        <div class="col-lg-4">
+            <div class="card-box card-pad" style="height:100%;">
+                <div class="card-sm-head">Forecast Summary</div>
+                <table class="table table-sm mb-0">
+                    <tbody>
+                        <tr>
+                            <td class="text-muted" style="width:50%">Algorithm</td>
+                            <td><strong>LightGBM</strong></td>
+                        </tr>
+                        <tr>
+                            <td class="text-muted">Features</td>
+                            <td class="small fw-semibold">lag1, lag3, lag12, rolling</td>
+                        </tr>
+                        <tr>
+                            <td class="text-muted">Forecast Month</td>
+                            <td><strong id="forecastMonth">—</strong></td>
+                        </tr>
+                        <tr style="background:rgba(79,70,229,0.05);">
+                            <td class="text-muted">Predicted Units</td>
+                            <td><strong id="forecastValue" style="font-size:18px;color:#4f46e5;">—</strong></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="hist-wrap">
+        <div class="hist-head">Sales History</div>
+        <div class="table-responsive">
+            <table class="htable table">
+                <thead>
+                    <tr><th>Year</th><th>Month</th><th>Units</th><th>Avg/Day</th><th>Max/Day</th><th>Price</th></tr>
+                </thead>
+                <tbody id="historyBody"></tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+    initSearch('searchInput', function(p) {
+        loadForecast(p.id, p.description, p.unitPrice, p.monthCount);
+    });
+
+    function loadForecast(productId, description, price, months) {
+        document.getElementById('forecastSection').style.display = '';
+        document.getElementById('productTitle').textContent = description;
+        document.getElementById('productMeta').textContent =
+            '£' + (price != null ? price.toFixed(2) : '0.00') + ' per unit · ' + months + ' months of history';
+        document.getElementById('forecastMonth').textContent = '…';
+        document.getElementById('forecastValue').textContent = '…';
+
+        // Step 1: load history (always show chart even if forecast fails)
+        fetch('/api/catalog/' + productId + '/history')
+            .then(function(r) {
+                if (!r.ok) throw new Error('History ' + r.status);
+                return r.json();
+            })
+            .then(function(history) {
+                populateHistoryTable(history);
+
+                // Step 2: load regression forecast
+                fetch('/api/forecast/' + productId + '/regression')
+                    .then(function(r) { return r.ok ? r.json() : null; })
+                    .then(function(forecast) {
+                        renderHistoryChart(history, forecast, 'Regression Forecast', '#4f46e5');
+                        if (forecast != null && isFinite(forecast)) {
+                            var last = history[history.length - 1];
+                            var fd = new Date(last.year, last.month);
+                            document.getElementById('forecastMonth').textContent =
+                                fd.toLocaleString('default', { month: 'long', year: 'numeric' });
+                            document.getElementById('forecastValue').textContent =
+                                Math.round(forecast).toLocaleString() + ' units';
+                        } else {
+                            renderHistoryChart(history, null, '', '#4f46e5');
+                            document.getElementById('forecastMonth').textContent = 'Insufficient data';
+                            document.getElementById('forecastValue').textContent = '—';
+                        }
+                    })
+                    .catch(function(err) {
+                        console.error('Forecast error:', err);
+                        renderHistoryChart(history, null, '', '#0891b2');
+                        document.getElementById('forecastMonth').textContent = '—';
+                        document.getElementById('forecastValue').textContent = '—';
+                    });
+            })
+            .catch(function(err) { console.error('History error:', err); });
+    }
+
+    function clearProduct() {
+        document.getElementById('forecastSection').style.display = 'none';
+        document.getElementById('searchInput').value = '';
+        document.getElementById('searchInput').focus();
+    }
+</script>
+}

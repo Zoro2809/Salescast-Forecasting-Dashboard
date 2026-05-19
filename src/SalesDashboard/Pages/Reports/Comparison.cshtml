@@ -1,0 +1,137 @@
+@page
+@model ImprovedSalesForecast.SalesDashboard.Pages.Reports.ComparisonModel
+@{
+    ViewData["Title"] = "Model Comparison";
+    ViewData["Subtitle"] = "All three forecasts side-by-side — LightGBM, SSA Time Series, and their Ensemble.";
+    ViewData["ActivePage"] = "Comparison";
+}
+
+<div class="search-wrap">
+    <span class="search-loup">&#x1F50D;</span>
+    <input id="searchInput" type="text" class="search-input"
+           placeholder="Type a product name (e.g. candle, mug, bag)..." autocomplete="off" />
+</div>
+
+<div id="forecastSection" style="display:none;">
+
+    <div class="prod-bar">
+        <div>
+            <div class="prod-name" id="productTitle"></div>
+            <div class="prod-meta" id="productMeta"></div>
+        </div>
+        <button class="btn btn-sm btn-outline-secondary" onclick="clearProduct()">&#x2715; New Search</button>
+    </div>
+
+    <div class="row g-3 mb-3">
+        <div class="col-md-4">
+            <div class="kpi blue">
+                <div class="kpi-label">LightGBM</div>
+                <div class="kpi-val" id="val_regression">—</div>
+                <div class="kpi-sub">units</div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="kpi green">
+                <div class="kpi-label">SSA Time Series</div>
+                <div class="kpi-val" id="val_ts">—</div>
+                <div class="kpi-sub">units</div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="kpi amber">
+                <div class="kpi-label">Ensemble (Best)</div>
+                <div class="kpi-val" id="val_ensemble">—</div>
+                <div class="kpi-sub">units</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card-box card-pad">
+        <div id="comparisonChart" style="height:340px;"></div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+    initSearch('searchInput', function(p) {
+        loadComparison(p.id, p.description, p.unitPrice, p.monthCount);
+    });
+
+    function loadComparison(productId, description, price, months) {
+        document.getElementById('forecastSection').style.display = '';
+        document.getElementById('productTitle').textContent = description;
+        document.getElementById('productMeta').textContent =
+            '£' + (price != null ? price.toFixed(2) : '0.00') + ' per unit · ' + months + ' months of history';
+
+        fetch('/api/catalog/' + productId + '/history')
+            .then(function(r) {
+                if (!r.ok) throw new Error('History ' + r.status);
+                return r.json();
+            })
+            .then(function(history) {
+                var xL = history.map(function(h) { return h.year + '-' + String(h.month).padStart(2,'0'); });
+                var yU = history.map(function(h) { return h.totalUnits; });
+                var lx = xL[xL.length - 1], ly = yU[yU.length - 1];
+
+                fetch('/api/forecast/' + productId + '/ensemble')
+                    .then(function(r) { return r.ok ? r.json() : null; })
+                    .then(function(ensemble) {
+                        var plotLayout = {
+                            margin:{t:20,r:20,b:60,l:60},
+                            legend:{orientation:'h',y:-0.3,x:0, font: { color: '#64748b' }},
+                            xaxis:{type:'category',tickangle:-30,tickfont:{size:12, color: '#94a3b8'},gridcolor:'rgba(0,0,0,0.03)',zeroline:false},
+                            yaxis:{title:{text:'Units',font:{color:'#94a3b8'}},tickfont:{size:12, color: '#94a3b8'},gridcolor:'rgba(0,0,0,0.03)',zerolinecolor:'rgba(0,0,0,0.05)',rangemode:'tozero'},
+                            hovermode:'x unified',
+                            plot_bgcolor:'transparent', paper_bgcolor:'transparent',
+                            font:{family:'-apple-system,BlinkMacSystemFont,system-ui,sans-serif',size:13, color: '#334155'}
+                        };
+
+                        if (ensemble != null) {
+                            document.getElementById('val_regression').textContent = Math.round(ensemble.regressionForecast).toLocaleString();
+                            document.getElementById('val_ts').textContent = Math.round(ensemble.timeSeriesForecast).toLocaleString();
+                            document.getElementById('val_ensemble').textContent = Math.round(ensemble.ensembleForecast).toLocaleString();
+
+                            var lastH = history[history.length - 1];
+                            var nextDate = new Date(lastH.year, lastH.month); // 1-based month → 0-based Date = next month
+                            var fL = nextDate.getFullYear() + '-' + String(nextDate.getMonth() + 1).padStart(2, '0');
+
+                            Plotly.newPlot('comparisonChart', [
+                                { x:xL, y:yU, name:'Historical', type:'scatter', mode:'lines+markers',
+                                  line:{color:'#94a3b8',width:2,shape:'spline'}, marker:{size:6,color:'#fff',line:{color:'#94a3b8',width:2}} },
+                                { x:[lx,fL], y:[ly,ensemble.regressionForecast], name:'LightGBM',
+                                  type:'scatter', mode:'lines+markers',
+                                  line:{color:'#4f46e5',width:3,dash:'dot',shape:'spline'}, marker:{size:10,color:'#fff',line:{color:'#4f46e5',width:2}} },
+                                { x:[lx,fL], y:[ly,ensemble.timeSeriesForecast], name:'SSA',
+                                  type:'scatter', mode:'lines+markers',
+                                  line:{color:'#0ea5e9',width:3,dash:'dash',shape:'spline'}, marker:{size:10,color:'#fff',line:{color:'#0ea5e9',width:2}} },
+                                { x:[lx,fL], y:[ly,ensemble.ensembleForecast], name:'Ensemble',
+                                  type:'scatter', mode:'lines+markers',
+                                  line:{color:'#f43f5e',width:4,shape:'spline'}, marker:{size:12,color:'#fff',line:{color:'#f43f5e',width:3}} }
+                            ], plotLayout, {responsive:true, displayModeBar: false});
+                        } else {
+                            Plotly.newPlot('comparisonChart', [
+                                { x:xL, y:yU, name:'Historical', type:'scatter', mode:'lines+markers',
+                                  line:{color:'#94a3b8',width:2,shape:'spline'}, marker:{size:6,color:'#fff',line:{color:'#94a3b8',width:2}} }
+                            ], plotLayout, {responsive:true, displayModeBar: false});
+                            document.getElementById('val_regression').textContent = '—';
+                            document.getElementById('val_ts').textContent = '—';
+                            document.getElementById('val_ensemble').textContent = '—';
+                        }
+                    })
+                    .catch(function(err) {
+                        console.error('Ensemble error:', err);
+                        document.getElementById('val_regression').textContent = '—';
+                        document.getElementById('val_ts').textContent = '—';
+                        document.getElementById('val_ensemble').textContent = '—';
+                    });
+            })
+            .catch(function(err) { console.error('History error:', err); });
+    }
+
+    function clearProduct() {
+        document.getElementById('forecastSection').style.display = 'none';
+        document.getElementById('searchInput').value = '';
+        document.getElementById('searchInput').focus();
+    }
+</script>
+}

@@ -1,0 +1,7 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src\Shared\Shared.csproj" />
+    <Project Path="src\ModelTrainer\ModelTrainer.csproj" />
+    <Project Path="src\SalesDashboard\SalesDashboard.csproj" />
+  </Folder>
+</Solution>
